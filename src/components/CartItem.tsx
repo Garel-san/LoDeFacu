@@ -10,7 +10,11 @@ export function CartItem({ item }: CartItemProps) {
 
   return (
     <div className="cart-item">
-      <img src={item.image} alt={item.name} className="cart-item__img" />
+      {item.image ? (
+        <img src={item.image} alt={item.name} className="cart-item__img" />
+      ) : (
+        <div className="cart-item__img cart-item__img--placeholder">🏷️</div>
+      )}
       <div className="cart-item__info">
         <p className="cart-item__name">{item.name}</p>
         <p className="cart-item__price">

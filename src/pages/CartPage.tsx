@@ -75,8 +75,9 @@ export function CartPage({ onGoBack }: CartPageProps) {
               </div>
             </div>
           )}
-          <Footer config={config} />
         </div>
+
+        <Footer config={config} />
       </div>
     );
   }

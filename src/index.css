@@ -216,6 +216,23 @@ button:disabled {
 }
 
 /* ─── PromoBar ──────────────────────────────────────────────── */
+.promo-bar__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cart-item__img--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
 .promo-bar {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -352,13 +369,14 @@ button:disabled {
 }
 
 .add-btn {
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--accent);
   color: var(--accent-text);
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -367,7 +385,6 @@ button:disabled {
     transform 0.1s ease,
     opacity 0.1s ease;
 }
-
 .add-btn:active {
   transform: scale(0.92);
   opacity: 0.85;
@@ -820,6 +837,13 @@ button:disabled {
   display: flex;
 }
 
+.mobile-map {
+  width: 100%;
+  height: 220px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
 /* Desktop: ocultar mobile, mostrar desktop */
 @media (min-width: 768px) {
   .mobile-page {
@@ -997,9 +1021,9 @@ button:disabled {
 
   .desktop-product-grid .add-btn {
     margin: 6px 12px 12px auto;
-    width: 30px;
-    height: 30px;
-    font-size: 17px;
+    width: 36px;
+    height: 36px;
+    font-size: 22px;
   }
 
   /* ── Location box ── */

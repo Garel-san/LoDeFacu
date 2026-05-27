@@ -294,6 +294,21 @@ export function MenuPage({ onGoToCart }: MenuPageProps) {
       {promoBar}
       {categoryFilter}
       <div className="product-list">{productList}</div>
+
+      {mapsUrl && (
+        <div className="mobile-map">
+          <iframe
+            title="Ubicación del local"
+            src={mapsUrl}
+            width="100%"
+            height="100%"
+            style={{ border: 0, borderRadius: "var(--radius-md)" }}
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+      )}
+
       <Footer config={config} />
 
       {totalCount > 0 && (
