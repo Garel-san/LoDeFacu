@@ -226,8 +226,9 @@ export function MenuPage({ onGoToCart }: MenuPageProps) {
               </div>
             </div>
           </div>
-          <Footer config={config} />
         </div>
+
+        <Footer config={config} />
       </div>
     );
   }

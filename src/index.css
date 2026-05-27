@@ -1068,8 +1068,11 @@ button:disabled {
 
   /* ── Footer ── */
   .client-footer {
-    margin-top: 4px;
-    padding-top: 22px;
+    margin-top: 0;
+    padding: 32px 48px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
   }
 
   .client-footer__main {
@@ -1077,6 +1080,8 @@ button:disabled {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
     gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
   }
 
   .client-footer__name {
@@ -1090,10 +1095,17 @@ button:disabled {
   }
 
   .client-footer__bottom {
+    display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+    max-width: 1100px;
+    margin: 16px auto 0;
+    padding-top: 14px;
+    border-top: 1px solid rgba(232, 232, 228, 0.08);
+    font-size: 11px;
+    color: var(--text-hint);
   }
 
   /* ── Cart desktop ── */
