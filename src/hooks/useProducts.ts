@@ -7,6 +7,15 @@ export interface Category {
   position: number;
 }
 
+export interface ProductVariant {
+  id: number;
+  product_id: number;
+  label: string;
+  price: number;
+  available: boolean;
+  position: number;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -17,6 +26,9 @@ export interface Product {
   available: boolean;
   badge: "popular" | "nuevo" | null;
   position: number;
+  pickup_only: boolean;
+  max_qty: number | null;
+  variants: ProductVariant[];
 }
 
 interface UseProductsResult {
@@ -33,17 +45,32 @@ export function useProducts(): UseProductsResult {
   const [error, setError] = useState<string | null>(null);
 
   async function fetchAll() {
-    const [{ data: cats, error: catsError }, { data: prods, error: prodsError }] =
-      await Promise.all([
-        supabase.from("categories").select("*").order("position"),
-        supabase.from("products").select("*").order("position"),
-      ]);
+    const [
+      { data: cats, error: catsError },
+      { data: prods, error: prodsError },
+      { data: variants, error: variantsError },
+    ] = await Promise.all([
+      supabase.from("categories").select("*").order("position"),
+      supabase.from("products").select("*").order("position"),
+      supabase.from("product_variants").select("*").order("position"),
+    ]);
 
-    if (catsError || prodsError) {
+    if (catsError || prodsError || variantsError) {
       setError("No se pudieron cargar los productos.");
     } else {
       setCategories(cats ?? []);
-      setProducts(prods ?? []);
+      const variantsByProduct = (variants ?? []).reduce<
+        Record<number, ProductVariant[]>
+      >((acc, v) => {
+        if (!acc[v.product_id]) acc[v.product_id] = [];
+        acc[v.product_id].push(v);
+        return acc;
+      }, {});
+      const productsWithVariants = (prods ?? []).map((p) => ({
+        ...p,
+        variants: variantsByProduct[p.id] ?? [],
+      }));
+      setProducts(productsWithVariants);
     }
 
     setLoading(false);
@@ -52,14 +79,28 @@ export function useProducts(): UseProductsResult {
   useEffect(() => {
     fetchAll();
 
-    // Escuchar cambios en tiempo real
     const channel = supabase
       .channel("menu-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, fetchAll)
-      .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, fetchAll)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        fetchAll,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "categories" },
+        fetchAll,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "product_variants" },
+        fetchAll,
+      )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return { products, categories, loading, error };

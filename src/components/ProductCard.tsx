@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useCart } from "../context/CartContext";
-import type { Product } from "../hooks/useProducts";
+import type { Product, ProductVariant } from "../hooks/useProducts";
 
 interface ProductCardProps {
   product: Product;
@@ -15,15 +16,50 @@ const PLACEHOLDER =
 
 export function ProductCard({ product }: ProductCardProps) {
   const { addItem, items } = useCart();
+  const [showVariantModal, setShowVariantModal] = useState(false);
 
-  const cartItem = items.find((i) => i.id === product.id);
-  const qty = cartItem?.qty ?? 0;
+  const hasVariants = product.variants.length > 0;
 
-  // Adaptar Product de Supabase al shape que espera el carrito
-  const productForCart = {
-    ...product,
-    image: product.image_url,
-    category: product.category_id,
+  // Cantidad total de este producto en el carrito (todas sus variantes sumadas)
+  const totalQty = items
+    .filter((i) => i.id === product.id)
+    .reduce((sum, i) => sum + i.qty, 0);
+
+  // Límite de cantidad alcanzado (solo aplica a productos sin variantes)
+  const maxReached =
+    !hasVariants && product.max_qty !== null && totalQty >= product.max_qty;
+
+  const handleAdd = () => {
+    if (maxReached) return;
+    if (hasVariants) {
+      setShowVariantModal(true);
+      return;
+    }
+
+    addItem({
+      id: product.id,
+      cartKey: String(product.id),
+      name: product.name,
+      price: product.price,
+      image: product.image_url,
+      pickup_only: product.pickup_only,
+      max_qty: product.max_qty,
+    });
+  };
+
+  const handleAddVariant = (variant: ProductVariant) => {
+    addItem({
+      id: product.id,
+      cartKey: `${product.id}-v${variant.id}`,
+      name: product.name,
+      price: variant.price,
+      image: product.image_url,
+      variantLabel: variant.label,
+      pickup_only: product.pickup_only,
+      max_qty: product.max_qty,
+    });
+
+    setShowVariantModal(false);
   };
 
   if (!product.available) {
@@ -48,39 +84,130 @@ export function ProductCard({ product }: ProductCardProps) {
     );
   }
 
+  const displayPrice = hasVariants
+    ? Math.min(
+        ...product.variants.filter((v) => v.available).map((v) => v.price),
+      )
+    : product.price;
+
   return (
-    <div className="product-card">
-      <div className="product-card__img-wrap">
-        <img
-          src={product.image_url || PLACEHOLDER}
-          alt={product.name}
-          className="product-card__img"
-          onError={(e) => {
-            e.currentTarget.src = PLACEHOLDER;
-          }}
-        />
-      </div>
-      <div className="product-card__info">
-        <div className="product-card__header">
-          <p className="product-card__name">{product.name}</p>
-          {product.badge && (
-            <span className={`badge badge--${product.badge}`}>
-              {BADGE_LABEL[product.badge]}
-            </span>
-          )}
+    <>
+      <div className="product-card">
+        <div className="product-card__img-wrap">
+          <img
+            src={product.image_url || PLACEHOLDER}
+            alt={product.name}
+            className="product-card__img"
+            onError={(e) => {
+              e.currentTarget.src = PLACEHOLDER;
+            }}
+          />
         </div>
-        <p className="product-card__description">{product.description}</p>
-        <p className="product-card__price">
-          ${product.price.toLocaleString("es-AR")}
-        </p>
+        <div className="product-card__info">
+          <div className="product-card__header">
+            <p className="product-card__name">{product.name}</p>
+            {product.badge && (
+              <span className={`badge badge--${product.badge}`}>
+                {BADGE_LABEL[product.badge]}
+              </span>
+            )}
+            {product.pickup_only && (
+              <span className="badge badge--pickup">Solo retiro</span>
+            )}
+          </div>
+          <p className="product-card__description">{product.description}</p>
+        </div>
+        <div className="product-card__footer">
+          <p className="product-card__price">
+            {hasVariants ? "Desde " : ""}$
+            {displayPrice.toLocaleString("es-AR")}
+          </p>
+        </div>
+        <button
+          className="add-btn"
+          onClick={handleAdd}
+          disabled={maxReached}
+          aria-label={`Agregar ${product.name} al carrito`}
+          title={
+            maxReached ? `Límite de ${product.max_qty} por pedido` : undefined
+          }
+        >
+          {maxReached ? "−" : totalQty > 0 ? totalQty : "+"}
+        </button>
       </div>
-      <button
-        className="add-btn"
-        onClick={() => addItem(productForCart)}
-        aria-label={`Agregar ${product.name} al carrito`}
-      >
-        {qty > 0 ? qty : "+"}
-      </button>
-    </div>
+
+      {showVariantModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowVariantModal(false)}
+        >
+          <div
+            className="modal variant-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {product.image_url && (
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="variant-modal__img"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            )}
+            <h2 className="modal__title">{product.name}</h2>
+            {product.description && (
+              <p className="variant-modal__description">
+                {product.description}
+              </p>
+            )}
+            {product.pickup_only && (
+              <p className="variant-modal__pickup-notice">
+                🏪 Este producto es solo para retiro en local
+              </p>
+            )}
+            <p className="variant-modal__label">Elegí una opción</p>
+            <div className="variant-list">
+              {product.variants
+                .filter((v) => v.available)
+                .map((v) => {
+                  const qtyInCart =
+                    items.find((i) => i.cartKey === `${product.id}-v${v.id}`)
+                      ?.qty ?? 0;
+                  // max_qty para variantes: aplica sobre el total del producto base
+                  const variantMaxReached =
+                    product.max_qty !== null && totalQty >= product.max_qty;
+                  return (
+                    <button
+                      key={v.id}
+                      className="variant-option"
+                      onClick={() => !variantMaxReached && handleAddVariant(v)}
+                      disabled={variantMaxReached}
+                    >
+                      <span className="variant-option__label">{v.label}</span>
+                      <span className="variant-option__right">
+                        <span className="variant-option__price">
+                          ${v.price.toLocaleString("es-AR")}
+                        </span>
+                        {qtyInCart > 0 && (
+                          <span className="variant-option__qty">
+                            {qtyInCart} en carrito
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+            </div>
+            <button
+              className="btn btn--ghost variant-modal__close"
+              onClick={() => setShowVariantModal(false)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

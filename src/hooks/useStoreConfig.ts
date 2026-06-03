@@ -8,6 +8,7 @@ export interface StoreConfig {
   delivery_open_time: string;
   delivery_close_time: string;
   delivery_available: boolean;
+  delivery_min_order: number; // ← nuevo
   promo_active: boolean;
   promo_label: string;
   promo_title: string;
