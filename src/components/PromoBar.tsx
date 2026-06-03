@@ -17,9 +17,12 @@ export function PromoBar({ promo }: PromoBarProps) {
   const handleAdd = () => {
     addItem({
       id: -1,
+      cartKey: "promo-dia",
       name: promo.title,
       price: promo.price,
       image: "",
+      pickup_only: false,
+      max_qty: null,
     });
   };
 
